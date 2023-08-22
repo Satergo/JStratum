@@ -6,7 +6,7 @@ Why?
 ====
 - We're working on a mining pool and weren't happy with the hackish way that most mining pool code deals with Stratum messaging.
 - We're working on a wallet client that may utilize the Electrum protocol, which is based on Stratum, and therefore needed Stratum there too.
-- There weren't many good Java implementations of Stratum, and the ones we did find were specific to mining (https://github.com/matt1/stratum-client-java, for example).
+- There weren't many good Java implementations of Stratum, and the ones we did find were specific to mining.
 
 How is this implementation different?
 =====================================

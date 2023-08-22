@@ -285,11 +285,11 @@ implements Result {
   throws MalformedStratumMessageException {
     boolean wasParsed = false;
 
-    if ((jsonResultData.length() >= 1)) {
+    if (!jsonResultData.isEmpty()) {
       final JSONArray subjectTuple = jsonResultData.optJSONArray(0);
 
       if (subjectTuple != null) {
-        if (subjectTuple.length() > 0) {
+        if (!subjectTuple.isEmpty()) {
           try {
             this.setSubject(subjectTuple.getString(0));
             this.setSubjectKey(subjectTuple.getString(1));

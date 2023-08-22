@@ -1,10 +1,10 @@
 package com.redbottledesign.bitcoin.rpc.stratum.transport.tcp;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.RemovalCause;
-import com.google.common.cache.RemovalListener;
-import com.google.common.cache.RemovalNotification;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalCause;
+import com.github.benmanes.caffeine.cache.RemovalListener;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +43,6 @@ public abstract class StratumTcpServer {
   /**
    * The cache of existing TCP connections.
    */
-  @SuppressWarnings("UnstableApiUsage")
   private final Cache<String, StratumTcpServerConnection> connections;
 
   /**
@@ -116,7 +115,6 @@ public abstract class StratumTcpServer {
    *
    * @return The active server connections.
    */
-  @SuppressWarnings("UnstableApiUsage")
   protected Cache<String, StratumTcpServerConnection> getConnections() {
     return this.connections;
   }
@@ -161,7 +159,6 @@ public abstract class StratumTcpServer {
       LOGGER.debug("Connection accepted: " + connection.getConnectionId());
     }
 
-    //noinspection UnstableApiUsage
     this.connections.put(connection.getConnectionId(), connection);
   }
 
@@ -192,7 +189,6 @@ public abstract class StratumTcpServer {
    * @throws IllegalArgumentException
    *   If the connection is not known to this server.
    */
-  @SuppressWarnings("UnstableApiUsage")
   protected void resetConnectionTimeout(final String connectionId)
   throws IllegalArgumentException {
     // This is enough to refresh the connection, due to the expireAfterAccess() rule.
@@ -229,9 +225,8 @@ public abstract class StratumTcpServer {
    *
    * @return The connection map.
    */
-  @SuppressWarnings("UnstableApiUsage")
   protected Cache<String, StratumTcpServerConnection> createConnectionMap() {
-    return CacheBuilder
+    return Caffeine
       .newBuilder()
       .expireAfterAccess(StratumTcpServerConnection.MAX_IDLE_TIME_MSECS, TimeUnit.MILLISECONDS)
       .removalListener(new ConnectionExpirationListener())
@@ -247,17 +242,15 @@ public abstract class StratumTcpServer {
    *
    * @author Guy Paddock (guy@inveniem.com)
    */
-  @SuppressWarnings("UnstableApiUsage")
   protected class ConnectionExpirationListener
   implements RemovalListener<String, StratumTcpServerConnection> {
     /**
      * {@inheritDoc}
      */
     @Override
-    public void onRemoval(
-      final RemovalNotification<String, StratumTcpServerConnection> notification) {
-      if (notification.getCause() == RemovalCause.EXPIRED) {
-        StratumTcpServer.this.onConnectionTimeout(notification.getValue());
+    public void onRemoval(@Nullable String s, @Nullable StratumTcpServerConnection connection, RemovalCause removalCause) {
+      if (removalCause == RemovalCause.EXPIRED) {
+        StratumTcpServer.this.onConnectionTimeout(connection);
       }
     }
   }

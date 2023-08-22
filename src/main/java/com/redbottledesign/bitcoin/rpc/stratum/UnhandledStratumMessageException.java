@@ -1,7 +1,6 @@
 package com.redbottledesign.bitcoin.rpc.stratum;
 
 import com.redbottledesign.bitcoin.rpc.stratum.message.RequestMessage;
-import org.json.JSONObject;
 
 /**
  * Exception thrown when there is no handler registered for a specific type of Stratum message.

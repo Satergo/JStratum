@@ -1,9 +1,9 @@
 package com.redbottledesign.bitcoin.rpc.stratum.message;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.RemovalCause;
-import com.google.common.cache.RemovalListener;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalCause;
+import com.github.benmanes.caffeine.cache.RemovalListener;
 import com.redbottledesign.bitcoin.rpc.stratum.MalformedStratumMessageException;
 import com.redbottledesign.bitcoin.rpc.stratum.UnhandledStratumMessageException;
 import org.json.JSONArray;
@@ -13,11 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -59,7 +55,6 @@ public class MessageMarshaller {
    *
    * <p>This map is purged as requests are answered or time-out.</p>
    */
-  @SuppressWarnings("UnstableApiUsage")
   protected Cache<String, Class<? extends ResponseMessage>> requestResponseMap;
 
   /**
@@ -110,7 +105,6 @@ public class MessageMarshaller {
    *   If {@code requestId} matches a request that is already registered as pending with this
    *   instance.
    */
-  @SuppressWarnings("UnstableApiUsage")
   public void registerPendingRequest(final String requestId,
                                      final Class<? extends ResponseMessage> responseType)
   throws IllegalArgumentException {
@@ -278,7 +272,6 @@ public class MessageMarshaller {
    *   If the JSON information is invalid or doesn't match any of the responses that this marshaller
    *   was expecting or is capable of marshalling.
    */
-  @SuppressWarnings("UnstableApiUsage")
   protected Message marshalResponseMessage(final JSONObject jsonMessage)
   throws MalformedStratumMessageException {
     final Message                  result;
@@ -363,20 +356,19 @@ public class MessageMarshaller {
    *
    * @return A new cache for waiting request responses.
    */
-  @SuppressWarnings("UnstableApiUsage")
   protected Cache<String, Class<? extends ResponseMessage>> createRequestResponseMap() {
-    return CacheBuilder
+    return Caffeine
       .newBuilder()
       .expireAfterWrite(IGNORED_REQUEST_TIMEOUT_MINUTES, TimeUnit.MINUTES)
       .removalListener(
-        (RemovalListener<String, Class<? extends ResponseMessage>>)((notification) -> {
-          if (notification.getCause() == RemovalCause.EXPIRED) {
+        (RemovalListener<String, Class<? extends ResponseMessage>>)(key, value, cause) -> {
+          if (cause == RemovalCause.EXPIRED) {
             MessageMarshaller.this.onRequestExpired(
-              notification.getKey(),
-              notification.getValue()
+              key,
+              value
             );
           }
-        })
+        }
       ).build();
   }
 }
